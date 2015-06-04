@@ -10,6 +10,7 @@ YUM_REPO_LIST=''
 YUM_ARCH_LIST=''
 REPO_BASE_PATH=''
 GENERATE_YUM_CONF=0
+TEMP_DIR='tmp'
 
 #-------------------------------------#
 #-      Print Usage Instruction      -#
@@ -151,11 +152,23 @@ Get_Yum_Repo_List()
 #--------------------------------------------------#
 Generate_Yum_Repo_Config()
 {
-    #  Grab the repo
-    REPO_NAME="$1"
-    
-    #  Set the path
+    #  Grab the repo name
+    REPO_NAME="$1-local"
 
+    #  Create tmp directory
+    mkdir -p ${TEMP_DIR}
+
+    #  Create temp file
+    TEMP_REPO_PATH="${TEMP_DIR}/$REPO_NAME.repo"
+    cp templates/template.repo "$TEMP_REPO_PATH"
+    
+    #  Set the Name
+    sed -i "s/__REPONAME__/$REPO_NAME/g" -i $TEMP_REPO_PATH
+    
+    #  Set the Path
+    REPO_FILEDIR="`echo \"file://$REPO_BASE_PATH/$REPO_NAME\" | sed 's/\//\\\\\\//g'`"
+    sed -i "s/__REPO_PATH__/$REPO_FILEDIR/g" -i $TEMP_REPO_PATH
+    
 }
 
 
@@ -180,6 +193,7 @@ Process_Repositories()
         if [ "$VERBOSE" = '1' ]; then
             echo $CMD
         fi
+        Generate_Yum_Repo_Config "${YUM_REPO_LIST[$X]}"
         if [ "$INTERACTIVE" = '1' ]; then
             echo 'Press any key to start the next repo sync.'
             read ANS
