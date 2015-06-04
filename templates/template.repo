@@ -1,0 +1,7 @@
+[__REPONAME__]
+name=__REPONAME__ Local Repository Mirror
+baseurl=__REPO_PATH__
+failovermethod=priority
+enabled=1
+gpgcheck=0
+

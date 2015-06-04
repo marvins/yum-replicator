@@ -9,6 +9,7 @@ INTERACTIVE=0
 YUM_REPO_LIST=''
 YUM_ARCH_LIST=''
 REPO_BASE_PATH=''
+GENERATE_YUM_CONF=0
 
 #-------------------------------------#
 #-      Print Usage Instruction      -#
@@ -22,6 +23,7 @@ Usage()
     #  Print help
     echo ''
     echo '  -h | --help         : Print usage instructions and exit.'
+    echo '  -g | --generate     : Generate yum *.repo files to adding to your yum.conf.d path.'
     
     #  Print the repo-base-path
     echo ''
@@ -144,6 +146,19 @@ Get_Yum_Repo_List()
 }
 
 
+#--------------------------------------------------#
+#-         Generate Yum Repo Configuration        -#
+#--------------------------------------------------#
+Generate_Yum_Repo_Config()
+{
+    #  Grab the repo
+    REPO_NAME="$1"
+    
+    #  Set the path
+
+}
+
+
 #-------------------------------------------------#
 #-          Process the Repository List          -#
 #-------------------------------------------------#
@@ -172,6 +187,12 @@ Process_Repositories()
 
         #  Fire off command
         $CMD
+
+        #  Generate the yum conf file
+        if [ "$GENERATE_YUM_CONF" = '1' ]; then
+            Generate_Yum_Repo_Config "${YUM_REPO_LIST[$X]}"
+        fi
+
     done
 
 }
@@ -198,6 +219,11 @@ for ARG in "$@"; do
         -i|--interactive)
             VERBOSE=1
             INTERACTIVE=1
+            ;;
+
+        #  Generate
+        -g|--generate)
+            GENERATE_YUM_CONF=1
             ;;
 
         #  Unknown Option
