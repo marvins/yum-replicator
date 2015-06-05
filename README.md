@@ -22,4 +22,6 @@ needed for users to copy to their yum.repos.d directory.  Basically it just sets
 ###Management and Update of the RPM repo data###
 This tool requires the `createrepo` tool installed.  This will enable you to build the RPM database and subsequently update it for any new changes cause by reposync.
 
+###Notes###
+This process in general takes a long time so automation is key. Put this in a cron job.
 

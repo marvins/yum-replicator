@@ -201,7 +201,7 @@ Update_Repo_Definitions()
     pushd $REPO_BASE_PATH/$CURRENT_REPO
 
     #  Run Create Repo
-    createrepo 
+    createrepo .
 
     #   Return
     popd
