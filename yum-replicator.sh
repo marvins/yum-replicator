@@ -11,6 +11,8 @@ YUM_ARCH_LIST=''
 REPO_BASE_PATH=''
 GENERATE_YUM_CONF=0
 TEMP_DIR='tmp'
+REPOSYNC_GPG='-g'
+REPOSYNC_NEWEST='-n'
 
 #-------------------------------------#
 #-      Print Usage Instruction      -#
@@ -24,6 +26,8 @@ Usage()
     #  Print help
     echo ''
     echo '  -h | --help         : Print usage instructions and exit.'
+    echo '  -v | --verbose      : Generate verbose output.'
+    echo '  -i | --interactive  : Provide interactive output with confirmation required between steps.'
     echo '  -g | --generate     : Generate yum *.repo files to adding to your yum.conf.d path.'
     
     #  Print the repo-base-path
@@ -71,6 +75,19 @@ Validate_User_Priviledges()
 
 }
 
+
+#-------------------------------------------------------#
+#-      Validate the proper software is installed      -#
+#-------------------------------------------------------#
+Validate_Required_Software()
+{
+    #  Make sure createrepo is installed
+    command -v createrepo >/dev/null 2>&1 || { 
+        echo >&2 "error: 'createrepo' is required but not installed."
+        Usage
+    }
+
+}
 
 #----------------------------------------#
 #-      Validate the repo base path     -#
@@ -172,6 +189,26 @@ Generate_Yum_Repo_Config()
 }
 
 
+#--------------------------------------------------#
+#-         Update the Yum Repo Definitions        -#
+#--------------------------------------------------#
+Update_Repo_Definitions()
+{
+    #  Get the current repo
+    CURRENT_REPO=$1
+
+    #  Navigate to new repo
+    pushd $REPO_BASE_PATH/$CURRENT_REPO
+
+    #  Run Create Repo
+    createrepo 
+
+    #   Return
+    popd
+
+}
+
+
 #-------------------------------------------------#
 #-          Process the Repository List          -#
 #-------------------------------------------------#
@@ -188,7 +225,7 @@ Process_Repositories()
         fi
 
         #  Create reposync command
-        CMD="reposync -l -r ${YUM_REPO_LIST[$X]} $ARCHVAL -p $REPO_BASE_PATH"
+        CMD="reposync ${REPOSYNC_GPG} ${REPOSYNC_NEWEST} -l -r ${YUM_REPO_LIST[$X]} $ARCHVAL -p $REPO_BASE_PATH"
 
         if [ "$VERBOSE" = '1' ]; then
             echo $CMD
@@ -206,6 +243,10 @@ Process_Repositories()
         if [ "$GENERATE_YUM_CONF" = '1' ]; then
             Generate_Yum_Repo_Config "${YUM_REPO_LIST[$X]}"
         fi
+        
+
+        #  Update the repo
+        Update_Repo_Definitions ${YUM_REPO_LIST[$X]}
 
     done
 
@@ -254,6 +295,9 @@ done
 #  Validate User Priviledges
 Validate_User_Priviledges
 
+
+#   Check required software
+Validate_Required_Software
 
 # Check the yum list
 Get_Yum_Repo_List
