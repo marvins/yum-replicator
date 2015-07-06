@@ -4,6 +4,7 @@
 #--------------------------------#
 #-      Global Variables        -#
 #--------------------------------#
+NUMBER_YUM_REPOS=0
 VERBOSE=0
 INTERACTIVE=0
 YUM_REPO_LIST=''
@@ -13,6 +14,7 @@ GENERATE_YUM_CONF=0
 TEMP_DIR='tmp'
 REPOSYNC_GPG='-g'
 REPOSYNC_NEWEST='-n'
+SKIP_SYNC=0
 
 #-------------------------------------#
 #-      Print Usage Instruction      -#
@@ -29,7 +31,8 @@ Usage()
     echo '  -v | --verbose      : Generate verbose output.'
     echo '  -i | --interactive  : Provide interactive output with confirmation required between steps.'
     echo '  -g | --generate     : Generate yum *.repo files to adding to your yum.conf.d path.'
-    
+    echo '  -s | --skip-sync    : Skip reposync.  Use if you just want to update the repo files.'
+
     #  Print the repo-base-path
     echo ''
     echo '   <repo-base-path>   : Path to where repositories will be synced against.'
@@ -53,9 +56,9 @@ Print_Configuration()
     echo "   REPO_BASE_PATH=$REPO_BASE_PATH"
     echo ''
     printf "%-60s  %-08s\n"  "Repository" "Architecture"
-    for ((X=1;X<=${#YUM_REPO_LIST[@]};X++)); do
+    for ((X=1;X<=${NUMBER_YUM_REPOS};X++)); do
         
-        printf "%-60s  %-08s\n"  "${YUM_REPO_LIST[$X]}"  "${YUM_ARCH_LIST[$X]}"
+        printf "%-2s %-60s  %-08s\n"  "$X" "${YUM_REPO_LIST[$X]}"  "${YUM_ARCH_LIST[$X]}"
     done
 
 
@@ -143,6 +146,10 @@ Get_Yum_Repo_List()
     #  Run yum
     TEMP_REPO_LIST=`yum repolist | awk -f subscripts/yum-repolist-parser.awk`
 
+    #  Empty the repo list
+    YUM_REPO_LIST='TEMP'
+    YUM_ARCH_LIST='TEMP'
+
     #  Iterate over list, splitting
     for TEMPLINE in $TEMP_REPO_LIST; do
         
@@ -153,14 +160,40 @@ Get_Yum_Repo_List()
         #  Get the architecture
         ARCH_NAME="`echo $TEMPLINE | awk -F \",\" '{print $2}'`"
         YUM_ARCH_LIST="$YUM_ARCH_LIST $ARCH_NAME"
-        
+
 
     done
     
     #  Convert to arrays
     IFS=' ' read -a YUM_REPO_LIST <<< "$YUM_REPO_LIST"
     IFS=' ' read -a YUM_ARCH_LIST <<< "$YUM_ARCH_LIST"
+    
+    #  YUM_REPO Size
+    NUMBER_YUM_REPOS=`expr ${#YUM_REPO_LIST[@]} - 1`
+}
 
+
+#-----------------------------------------------------#
+#-         Generate Composite Configuration          -#
+#-----------------------------------------------------#
+Generate_Composite_Yum_Config()
+{
+    if [ -f "$REPO_BASE_PATH/composite-repo.repo" ]; then
+        rm $REPO_BASE_PATH/composite-repo.repo
+    fi
+
+
+    #  Grab the list of repos
+    REPO_LIST=`ls ${TEMP_DIR}/*.repo`
+
+    #  Print the list
+    for REPO in $REPO_LIST; do
+
+        #cp $REPO $REPO_BASE_PATH/
+        echo "cat $REPO >> $REPO_BASE_PATH/composite-repo.repo"
+        cat $REPO >> $REPO_BASE_PATH/composite-repo.repo
+        
+    done
 }
 
 
@@ -183,9 +216,12 @@ Generate_Yum_Repo_Config()
     sed -i "s/__REPONAME__/$REPO_NAME/g" -i $TEMP_REPO_PATH
     
     #  Set the Path
-    REPO_FILEDIR="`echo \"file://$REPO_BASE_PATH/$REPO_NAME\" | sed 's/\//\\\\\\//g'`"
+    REPO_FILEDIR="`echo \"file://$REPO_BASE_PATH/$REPO\" | sed 's/\//\\\\\\//g'`"
     sed -i "s/__REPO_PATH__/$REPO_FILEDIR/g" -i $TEMP_REPO_PATH
-    
+   
+    #  Copy to the destination
+    echo "Copying from  $TEMP_REPO_PATH to $REPO_BASE_PATH/$REPO_NAME.repo"
+    cp $TEMP_REPO_PATH $REPO_BASE_PATH/$REPO_NAME.repo
 }
 
 
@@ -194,6 +230,12 @@ Generate_Yum_Repo_Config()
 #--------------------------------------------------#
 Update_Repo_Definitions()
 {
+        
+    #  Log Entry
+    if [ "$VERBOSE" = '1' ]; then
+        echo "Updating Repo Definitions"
+    fi
+
     #  Get the current repo
     CURRENT_REPO=$1
 
@@ -216,39 +258,52 @@ Process_Repositories()
 {
 
     # Iterate over list
-    for ((X=1;X<=${#YUM_REPO_LIST[@]};X++)); do
+    for ((X=1;X<=${NUMBER_YUM_REPOS};X++)); do
         
+        #  Log
+        if [ "$VERBOSE" = '1' ]; then
+            echo ''
+            echo "Processing Repo $X of ${NUMBER_YUM_REPOS}"
+        fi
+
         #  Set the arch
         ARCHVAL="--arch=${YUM_ARCH_LIST[$X]}"
         if [ "${YUM_ARCH_LIST[$X]}" = '__NULL__' ]; then
             ARCHVAL=''
         fi
 
-        #  Create reposync command
-        CMD="reposync ${REPOSYNC_GPG} ${REPOSYNC_NEWEST} -l -r ${YUM_REPO_LIST[$X]} $ARCHVAL -p $REPO_BASE_PATH"
+        #  Only run if we are not skipping the sync
+        if [ "$SKIP_SYNC" = '0' ]; then
 
-        if [ "$VERBOSE" = '1' ]; then
-            echo $CMD
-        fi
-        Generate_Yum_Repo_Config "${YUM_REPO_LIST[$X]}"
-        if [ "$INTERACTIVE" = '1' ]; then
-            echo 'Press any key to start the next repo sync.'
-            read ANS
+            #  Create reposync command
+            CMD="reposync ${REPOSYNC_GPG} ${REPOSYNC_NEWEST} -l -r ${YUM_REPO_LIST[$X]} $ARCHVAL -p $REPO_BASE_PATH"
+
+            if [ "$VERBOSE" = '1' ]; then
+                echo " ->  $CMD"
+            fi
+            if [ "$INTERACTIVE" = '1' ]; then
+                echo 'Press any key to start the next repo sync.'
+                read ANS
+            fi
+
+            #  Fire off command
+            $CMD
+        
+            #  Update the repo
+            Update_Repo_Definitions ${YUM_REPO_LIST[$X]}
         fi
 
-        #  Fire off command
-        $CMD
 
         #  Generate the yum conf file
         if [ "$GENERATE_YUM_CONF" = '1' ]; then
+            echo " ->  Generating Yum Repo"
             Generate_Yum_Repo_Config "${YUM_REPO_LIST[$X]}"
         fi
-        
-
-        #  Update the repo
-        Update_Repo_Definitions ${YUM_REPO_LIST[$X]}
 
     done
+
+    #  Generate the composite Configuration
+    Generate_Composite_Yum_Config
 
 }
 
@@ -279,6 +334,11 @@ for ARG in "$@"; do
         #  Generate
         -g|--generate)
             GENERATE_YUM_CONF=1
+            ;;
+        
+        #  Skip sync
+        -s|--skip-sync)
+            SKIP_SYNC=1
             ;;
 
         #  Unknown Option
