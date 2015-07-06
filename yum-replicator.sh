@@ -16,6 +16,9 @@ REPOSYNC_GPG='-g'
 REPOSYNC_NEWEST='-n'
 SKIP_SYNC=0
 
+IGNORE_MODE=0
+IGNORE_PATH=''
+
 #-------------------------------------#
 #-      Print Usage Instruction      -#
 #-------------------------------------#
@@ -27,12 +30,13 @@ Usage()
 
     #  Print help
     echo ''
-    echo '  -h | --help         : Print usage instructions and exit.'
-    echo '  -v | --verbose      : Generate verbose output.'
-    echo '  -i | --interactive  : Provide interactive output with confirmation required between steps.'
-    echo '  -g | --generate     : Generate yum *.repo files to adding to your yum.conf.d path.'
-    echo '  -s | --skip-sync    : Skip reposync.  Use if you just want to update the repo files.'
-
+    echo '  -h | --help          : Print usage instructions and exit.'
+    echo '  -v | --verbose       : Generate verbose output.'
+    echo '  -i | --interactive   : Provide interactive output with confirmation required between steps.'
+    echo '  -g | --generate      : Generate yum *.repo files to adding to your yum.conf.d path.'
+    echo '  -s | --skip-sync     : Skip reposync.  Use if you just want to update the repo files.'
+    echo '  -I | --ignore <path> : Provide ignore list file.'
+   
     #  Print the repo-base-path
     echo ''
     echo '   <repo-base-path>   : Path to where repositories will be synced against.'
