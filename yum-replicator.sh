@@ -14,6 +14,7 @@ GENERATE_YUM_CONF=0
 TEMP_DIR='tmp'
 REPOSYNC_GPG='-g'
 REPOSYNC_NEWEST='-n'
+REPOSYNC_MOD='-m'
 SKIP_SYNC=0
 
 IGNORE_MODE=0
@@ -246,8 +247,16 @@ Update_Repo_Definitions()
     #  Navigate to new repo
     pushd $REPO_BASE_PATH/$CURRENT_REPO
 
+    #  Check if comps exists
+    if [ -f "comps.xml" ]; then
+        COMPVAL='-g comps.xml'
+    else
+        COMPVAL=''
+    fi
+
     #  Run Create Repo
-    createrepo .
+    echo "Running: createrepo $COMPVAL ."
+    createrepo $COMPVAL .
 
     #   Return
     popd
@@ -280,7 +289,7 @@ Process_Repositories()
         if [ "$SKIP_SYNC" = '0' ]; then
 
             #  Create reposync command
-            CMD="reposync ${REPOSYNC_GPG} ${REPOSYNC_NEWEST} -l -r ${YUM_REPO_LIST[$X]} $ARCHVAL -p $REPO_BASE_PATH"
+            CMD="reposync ${REPOSYNC_MOD} ${REPOSYNC_GPG} ${REPOSYNC_NEWEST} -l -r ${YUM_REPO_LIST[$X]} $ARCHVAL -p $REPO_BASE_PATH"
 
             if [ "$VERBOSE" = '1' ]; then
                 echo " ->  $CMD"
