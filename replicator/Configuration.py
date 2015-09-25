@@ -38,7 +38,20 @@ class Configuration(object):
                                  default='options.cfg',
                                  required=False,
                                  help='Configuration file path.')
+        
+        #  Build Repo Config
+        cmd_options.add_argument('-b','--build-default-repolist',
+                                 dest='build_repolist',
+                                 default=False,
+                                 action='store_true',
+                                 help='Flag if you want to construct the repo config file.')
 
+        #  Repo config
+        cmd_options.add_argument('-r','--repolist',
+                                 dest='repo_config_path',
+                                 default='repolist.csv',
+                                 required=False,
+                                 help='Path to repo config path.')
 
         #  Parse the auments
         self.cmd_options = cmd_options.parse_args()
@@ -51,3 +64,11 @@ class Configuration(object):
 
         #  Read file
         self.cfg_options.read(self.cmd_options.config_pathname)
+
+        #  Flag if we want to just build the repolist
+        self.values['BUILD_REPOLIST'] = self.cmd_options.build_repolist
+
+        #  Repo config path
+        self.values['REPO_CONFIG_PATH'] = self.cmd_options.repo_config_path
+
+

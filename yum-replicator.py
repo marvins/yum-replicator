@@ -24,6 +24,10 @@ def Main():
     #  Create repository manager
     repo_manager = Repo_Manager(options=options)
 
+    #  If we only want to build the repolist, then exit
+    if options.values['BUILD_REPOLIST'] is True:
+        return
+
     #  Iterate over repositories, syncing
 
 

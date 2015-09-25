@@ -7,15 +7,28 @@ def Run_Command(cmd):
 
     #  Create subprocess object
     p = subprocess.Popen( cmd,
-                          stdout=subprocess.STDOUT,
-                          stderr=subprocess.PIPE)
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE,
+                          shell=True)
+    
+    # Output data
+    sout = ''
+    serr = ''
 
-    #  Run
-    try:
-        sout, serr = p.communicate()
+    #  Get all output
+    while True:
 
-    except TimeoutExpired:
-        p.kill()
-        sout, serr = p.communicate()
+        #  Get the next set of output
+        outline = p.stdout.readline()
+        errline = p.stderr.readline()
+
+        if not outline and not errline:
+            break
+        elif outline:
+            sout += outline.decode('utf-8')
+        elif errline:
+            serr += errline.decode('utf-8')
+        
 
     return sout, serr
+
