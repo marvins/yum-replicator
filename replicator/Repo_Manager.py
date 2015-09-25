@@ -44,15 +44,18 @@ class Repo_Manager(object):
 
     def __init__(self,options):
 
-        #  Get list of repositories
-        self.repos = self.Load_Repositories()
 
         #  Flag if we want to write the repolist
         if options.values['BUILD_REPOLIST'] is True:
             self.Build_Repo_Config( options.values['REPO_CONFIG_PATH'] )
+        
+        
+        #  Get list of repositories
+        else:    
+            self.repos = self.Load_Repositories( options.values['REPO_CONFIG_PATH'] )
 
 
-    def Load_Repositories(self):
+    def Load_Repositories(self, repo_config_path):
         
         #  Create output repo list
         repos = []
@@ -127,7 +130,7 @@ class Repo_Manager(object):
         with open( repo_config_path, 'w' ) as csvfile:
 
             #  Write the header
-            csvfile.write('Repo Name,Architecture,Enabled')
+            csvfile.write('Repo Name,Architecture,Enabled\n')
 
             #  Write each line
             for repo in repos:
