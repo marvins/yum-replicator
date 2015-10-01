@@ -29,7 +29,11 @@ def Main():
         return
 
     #  Iterate over repositories, syncing
+    for repo in repo_manager.repos:
 
+        #  Sync the repo
+        repo.Sync_Repository(options.values['SYNC_DIRECTORY'],
+                             options.reposync_config)
 
 if __name__ == '__main__':
     Main()

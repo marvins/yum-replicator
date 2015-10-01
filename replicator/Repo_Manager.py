@@ -2,10 +2,23 @@ __author__ = 'ms6401'
 
 
 #  Python Libraries
-import csv
+import csv, os, sys, logging
 
 #  Project Libraries
 from .Utilities import Run_Command
+
+
+def Parse_Repo_Name(input_str):
+
+    #  Check for /
+    comps = str(input_str).split('/')
+
+    #  Set the actual repo name
+    repo_name = comps[0]
+
+    #  Figure out if the second or third arg is the arch
+    return repo_name
+
 
 def str2bool( str_data ):
     
@@ -36,6 +49,23 @@ class Yum_Repo(object):
         #  Set the enable flag
         self.enabled = enabled
 
+    def Sync_Repository(self, sync_directory, reposync_config):
+
+        #  Check if the path exists
+        if os.path.exists(sync_directory) is False:
+            raise Exception('Sync directory does not exist (' + sync_directory + ')')
+
+
+        #  Create Command to run
+        cmd = reposync_config.Build_Command(repo_name=self.name,
+                                            repo_sync_directory=sync_directory)
+
+        #  Execute Command
+        logging.info('Running: ' + cmd)
+        output = Run_Command(cmd)
+        logging.info('Result: ' + str(output))
+
+
 
 class Repo_Manager(object):
 
@@ -52,14 +82,24 @@ class Repo_Manager(object):
         
         #  Get list of repositories
         else:    
-            self.repos = self.Load_Repositories( options.values['REPO_CONFIG_PATH'] )
+            self.repos = self.Load_Repositories( options)
 
 
-    def Load_Repositories(self, repo_config_path):
-        
+    def Load_Repositories(self, options):
+
+        #  Grab the repo config path
+        repo_config_path = options.values['REPO_CONFIG_PATH']
+
         #  Create output repo list
         repos = []
-        
+
+        #  Make sure the config file exists
+        if os.path.exists(repo_config_path) is False:
+            sys.stderr.write('Unable to file repo configuration file (' + repo_config_path + ')\n')
+            options.cmd_parser.print_help()
+            sys.exit(-1)
+
+
         #  Open the CSV File
         with open( repo_config_path, 'r') as csvfile:
             
@@ -94,8 +134,6 @@ class Repo_Manager(object):
         repo_contents = False
 
         # Define default values
-        arch = 'all'
-        enabled = False
         repos = []
 
         #  Iterate over lines
@@ -120,10 +158,12 @@ class Repo_Manager(object):
                 continue;
 
             #  Split
-            comps = pline.split()
-            
+            repo_name = Parse_Repo_Name(pline.split()[0])
+            arch = 'all'
+            enabled = False
+
             #  Add the name of the repo
-            repos.append(Yum_Repo( comps[0], arch, enabled ))
+            repos.append(Yum_Repo( repo_name, arch, enabled ))
 
 
         #  Create CSV File
