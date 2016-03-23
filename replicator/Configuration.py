@@ -1,4 +1,7 @@
-__author__ = 'ms6401'
+#    File:    Configuration.py
+#    Author:  Marvin Smith
+#  
+__author__ = 'Marvin Smith'
 
 
 #  Python Libraries
@@ -10,16 +13,21 @@ class Reposync_Config(object):
     cmd_name = None
 
 
-    def __init__(self, cmd_name):
+    def __init__(self, cmd_name, cmd_args = None):
 
         #  Set the command name
         self.cmd_name = cmd_name
 
+        self.cmd_args = cmd_args
 
     def Build_Command(self, repo_name, repo_sync_directory  ):
 
+        cmd_args = ''
+        if self.cmd_args is not None:
+            cmd_args = self.cmd_args
+
         #  Return output
-        output = self.cmd_name + ' -r ' + repo_name + ' -p ' + repo_sync_directory
+        output = self.cmd_name + ' ' + cmd_args + ' -r ' + repo_name + ' -p ' + repo_sync_directory
 
         return output
 
@@ -81,6 +89,13 @@ class Configuration(object):
                                  required=False,
                                  help='Path to repo config path.')
 
+        #  Do a Dry Run
+        self.cmd_parser.add_argument('--dry-run',
+                                     dest='dry_run',
+                                     default=False,
+                                     action='store_true',
+                                     help='Print only the shell commands to execute. Do not actually run.')
+
         #  Parse the auments
         self.cmd_options = self.cmd_parser.parse_args()
 
@@ -107,10 +122,12 @@ class Configuration(object):
 
 
         #  Create reposync config object
-        self.reposync_config = Reposync_Config(cmd_name=self.cfg_options.get('general', 'REPO_SYNC_COMMAND'))
+        self.reposync_config = Reposync_Config(cmd_name=self.cfg_options.get('general', 'REPO_SYNC_COMMAND'),
+                                               cmd_args=self.cfg_options.get('general', 'REPO_SYNC_ARGS'))
 
 
     def Configure_Logging(self):
 
         #  Get the log level
         logging.basicConfig(level=self.values['LOG_LEVEL'])
+

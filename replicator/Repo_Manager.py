@@ -15,6 +15,9 @@ def Parse_Repo_Name(input_str):
 
     #  Set the actual repo name
     repo_name = comps[0]
+    
+    #  Remove Leading !
+    repo_name = repo_name.strip('!')
 
     #  Figure out if the second or third arg is the arch
     return repo_name
@@ -49,7 +52,7 @@ class Yum_Repo(object):
         #  Set the enable flag
         self.enabled = enabled
 
-    def Sync_Repository(self, sync_directory, reposync_config):
+    def Sync_Repository(self, sync_directory, reposync_config, dry_run = False):
 
         #  Check if the path exists
         if os.path.exists(sync_directory) is False:
@@ -62,9 +65,14 @@ class Yum_Repo(object):
 
         #  Execute Command
         logging.info('Running: ' + cmd)
-        output = Run_Command(cmd)
-        logging.info('Result: ' + str(output))
+        if dry_run is False:
+            output = Run_Command(cmd)
+            logging.info('Result: ' + str(output))
 
+    def ToString(self):
+        
+        output  = "Repo Name: " + self.name + ', Arch: ' + self.arch + ', Enabled: ' + str(self.enabled)
+        return output
 
 
 class Repo_Manager(object):
@@ -117,6 +125,10 @@ class Repo_Manager(object):
                 #  Add the repo
                 repos.append(Yum_Repo(name,arch,flag))
 
+
+        #  Print the Loaded Repos
+        for repo in repos:
+            print('Found Repository: ' + repo.ToString())
 
         #  Return the configured repositories
         return repos

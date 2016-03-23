@@ -4,7 +4,11 @@ __author__ = 'ms6401'
 import subprocess, logging
 
 def Run_Command(cmd):
+    '''
+    Run the specified command.
+    '''
 
+    #  Log Entry
     logging.debug('Running Command: ' + str(cmd))
 
     #  Create subprocess object
@@ -21,7 +25,9 @@ def Run_Command(cmd):
     while True:
 
         #  Get the next set of output
-        outline, errline = p.communicate()
+        outline = p.stdout.read()
+        errline = p.stderr.read()
+
 
         if not outline and not errline:
             break

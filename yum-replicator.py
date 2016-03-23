@@ -33,7 +33,8 @@ def Main():
 
         #  Sync the repo
         repo.Sync_Repository(options.values['SYNC_DIRECTORY'],
-                             options.reposync_config)
+                             options.reposync_config,
+                             options.cmd_options.dry_run)
 
 if __name__ == '__main__':
     Main()
