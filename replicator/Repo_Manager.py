@@ -69,6 +69,14 @@ class Yum_Repo(object):
             output = Run_Command(cmd)
             logging.info('Result: ' + str(output))
 
+    def Write_Spec(self, fout, base_url ):
+
+        #  Create text
+        output  = '[' + str(self.name) + ']\n'
+        output += 'baseurl=file://' + base_url + '\n'
+
+        fout.write(output)
+
     def ToString(self):
         
         output  = "Repo Name: " + self.name + ', Arch: ' + self.arch + ', Enabled: ' + str(self.enabled)
@@ -188,3 +196,17 @@ class Repo_Manager(object):
             for repo in repos:
                 csvfile.write( repo.name + ',' + str(repo.arch) + ',' + str(repo.enabled) + "\n")
 
+    def Write_Repo_Spec(self, options):
+
+        #  Create the output file
+        base_url = options.values['SYNC_DIRECTORY']
+        output_path = base_url + '/composite.repo'
+        
+        with open( output_path, 'w') as fout:
+            for repo in self.repos:
+                
+                repo.Write_Spec(fout, base_url)
+                fout.write('\n')
+
+
+        

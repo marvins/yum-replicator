@@ -36,6 +36,8 @@ def Main():
                              options.reposync_config,
                              options.cmd_options.dry_run)
 
+    repo_manager.Write_Repo_Spec()
+
 if __name__ == '__main__':
     Main()
 
