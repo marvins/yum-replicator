@@ -52,20 +52,31 @@ class Yum_Repo(object):
         #  Set the enable flag
         self.enabled = enabled
 
-    def Sync_Repository(self, sync_directory, reposync_config, dry_run = False):
+    def Sync_Repository(self, sync_directory,
+                        reposync_config,
+                        dry_run = False,
+                        skip_reposync = False):
+
+
+        #  Check if the path is root-relative
+        abs_path = sync_directory
+        if os.path.isabs(sync_directory) is False:
+
+            #  If so, then make it absolute
+            abs_path = os.path.abspath(sync_directory)
 
         #  Check if the path exists
-        if os.path.exists(sync_directory) is False:
-            raise Exception('Sync directory does not exist (' + sync_directory + ')')
+        if os.path.exists(abs_path) is False:
+            raise Exception('Sync directory does not exist (' + abs_path + ')')
 
 
         #  Create Command to run
         cmd = reposync_config.Build_Command(repo_name=self.name,
-                                            repo_sync_directory=sync_directory)
+                                            repo_sync_directory=abs_path)
 
         #  Execute Command
         logging.info('Running: ' + cmd)
-        if dry_run is False:
+        if dry_run is False and skip_reposync is False:
             output = Run_Command(cmd)
             logging.info('Result: ' + str(output))
 
@@ -93,7 +104,8 @@ class Repo_Manager(object):
 
         #  Flag if we want to write the repolist
         if options.values['BUILD_REPOLIST'] is True:
-            self.Build_Repo_Config( options.values['REPO_CONFIG_PATH'] )
+            self.Build_Repo_Config( options.values['REPO_CONFIG_PATH'],
+                                    options.values['REPO_CONFIG_FORMAT'])
         
         
         #  Get list of repositories
@@ -142,7 +154,8 @@ class Repo_Manager(object):
         return repos
 
 
-    def Build_Repo_Config( self, repo_config_path ):
+    def Build_Repo_Config( self, repo_config_path,
+                                 repo_config_format):
 
         
         #  Get list of repos on the system
@@ -200,12 +213,19 @@ class Repo_Manager(object):
 
         #  Create the output file
         base_url = options.values['SYNC_DIRECTORY']
-        output_path = base_url + '/composite.repo'
+
+        #  Check if the path is root-relative
+        abs_path = base_url
+        if os.path.isabs(base_url) is False:
+            #  If so, then make it absolute
+            abs_path = os.path.abspath(base_url)
+
+        output_path = abs_path + '/composite.repo'
         
         with open( output_path, 'w') as fout:
             for repo in self.repos:
                 
-                repo.Write_Spec(fout, base_url)
+                repo.Write_Spec(fout, abs_path)
                 fout.write('\n')
 
 

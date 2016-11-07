@@ -85,9 +85,16 @@ class Configuration(object):
         #  Repo config
         self.cmd_parser.add_argument('-r','--repolist',
                                  dest='repo_config_path',
-                                 default='repolist.csv',
+                                 default=None,
                                  required=False,
                                  help='Path to repo config path.')
+
+        self.cmd_parser.add_argument('-rf','--repolist-format',
+                                     dest='repo_config_format',
+                                     default=None,
+                                     required=False,
+                                     choices=['csv'],
+                                     help='Type of Repo Config Format')
 
         #  Do a Dry Run
         self.cmd_parser.add_argument('--dry-run',
@@ -95,6 +102,13 @@ class Configuration(object):
                                      default=False,
                                      action='store_true',
                                      help='Print only the shell commands to execute. Do not actually run.')
+
+        #  Skip repository sync step
+        self.cmd_parser.add_argument('--skip-reposync','-rs',
+                                     dest='skip_reposync',
+                                     default=False,
+                                     action='store_true',
+                                     help='Skip the repository sync step (reposync cmd)')
 
         #  Parse the auments
         self.cmd_options = self.cmd_parser.parse_args()
@@ -112,10 +126,19 @@ class Configuration(object):
         self.values['BUILD_REPOLIST'] = self.cmd_options.build_repolist
 
         #  Repo config path
-        self.values['REPO_CONFIG_PATH'] = self.cmd_options.repo_config_path
+        self.values['REPO_CONFIG_PATH'] = self.cfg_options.get('repo-config','REPO_CONFIG_PATH')
+        if self.cmd_options.repo_config_path is not None:
+            self.values['REPO_CONFIG_PATH'] = self.cmd_options.repo_config_path
+
+        #  Repo Config Format
+        self.values['REPO_CONFIG_FORMAT'] = self.cfg_options.get('repo-config','REPO_CONFIG_FORMAT')
+        if self.cmd_options.repo_config_format is not None:
+            self.values['REPO_CONFIG_FORMAT'] = self.cmd_options.repo_config_format
+
 
         #  Define the Synchronization Directory
         self.values['SYNC_DIRECTORY'] = self.cfg_options.get('general','SYNC_DIRECTORY')
+
 
         #  Define the Log Level
         self.values['LOG_LEVEL'] = getattr(logging,self.cfg_options.get('logging','log_level'))
