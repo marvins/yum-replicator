@@ -27,7 +27,7 @@ class Reposync_Config(object):
             cmd_args = self.cmd_args
 
         #  Return output
-        output = self.cmd_name + ' ' + cmd_args + ' -r ' + repo_name + ' ' + repo_sync_directory
+        output = self.cmd_name + ' ' + cmd_args + ' -r ' + repo_name + ' -p ' + repo_sync_directory
 
         return output
 
@@ -47,6 +47,10 @@ class Configuration(object):
 
         #  Configure Logging
         self.Configure_Logging()
+
+        #  Clear Run Script if Needed
+        if self.values['GEN_RUN_SCRIPT_OPTIONS']['ENABLED'] == True:
+            self.Initialize_Run_Script()
 
     def Set_Defaults(self):
 
@@ -162,9 +166,22 @@ class Configuration(object):
         if self.cfg_options.has_option('repo-spec', 'WRITE_REPO_COMPOSITE_SPEC'):
             self.values['REPO_SPEC']['WRITE_REPO_COMPOSITE_SPEC'] = self.cfg_options.getboolean('repo-spec','WRITE_REPO_COMPOSITE_SPEC')
 
+        #  Generate Run Script Options
+        self.values['GEN_RUN_SCRIPT_OPTIONS'] = {}
+        self.values['GEN_RUN_SCRIPT_OPTIONS']['ENABLED'] = self.cfg_options.getboolean('general','GEN_RUN_SCRIPT')
+        self.values['GEN_RUN_SCRIPT_OPTIONS']['PATH']    = self.cfg_options.get('general','GEN_RUN_SCRIPT_PATH')
+
 
     def Configure_Logging(self):
 
         #  Get the log level
         logging.basicConfig(level=self.values['LOG_LEVEL'])
 
+    def Initialize_Run_Script(self):
+
+        #  Log Entry
+        logging.info('Initializing Run Script')
+
+        #  Open File
+        with open(self.values['GEN_RUN_SCRIPT_OPTIONS']['PATH'], 'w') as fout:
+            fout.write('#!/bin/bash -x\n')

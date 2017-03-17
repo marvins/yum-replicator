@@ -67,7 +67,8 @@ class Yum_Repo(object):
     def Sync_Repository(self, sync_directory,
                         reposync_config,
                         dry_run = False,
-                        skip_reposync = False):
+                        gen_run_script_options = {},
+                        skip_reposync = False ):
 
 
         #  Check if the path is root-relative
@@ -91,6 +92,14 @@ class Yum_Repo(object):
         if dry_run is False and skip_reposync is False:
             output = Run_Command(cmd)
             logging.info('Result: ' + str(output))
+
+
+        #  Add to the run script
+        if self.enabled == True:
+            if gen_run_script_options['ENABLED'] == True:
+                with open(gen_run_script_options['PATH'], 'a') as fout:
+                    fout.write(cmd + '\n')
+
 
     def Write_Spec(self, fout, base_url ):
 

@@ -32,7 +32,8 @@ def Main():
         repo.Sync_Repository(options.values['SYNC_DIRECTORY'],
                              options.reposync_config,
                              options.cmd_options.dry_run,
-                             options.cmd_options.skip_reposync)
+                             options.values['GEN_RUN_SCRIPT_OPTIONS'],
+                             options.cmd_options.skip_reposync )
 
     #  Build the Repo Spec File
     repo_manager.Write_Repo_Spec(options=options)
