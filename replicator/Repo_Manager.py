@@ -22,6 +22,16 @@ def Parse_Repo_Name(input_str):
     #  Figure out if the second or third arg is the arch
     return repo_name
 
+def Parse_Repo_Enable_State(input_str):
+
+    comp = input_str.lower()
+
+    #  Check for Disable/Enable
+    if 'enabled' in comp:
+        return True
+    else:
+        return False
+
 
 def str2bool( str_data ):
     
@@ -42,7 +52,9 @@ class Yum_Repo(object):
     enabled = None
 
     def __init__(self, name, arch, enabled):
-        
+
+        logging.debug('Building Repo Def. Name: ' + str(name) + ', Arch: ' + str(arch) + ', Enabled: ' + str(enabled))
+
         #  Set the name
         self.name = name
 
@@ -75,7 +87,7 @@ class Yum_Repo(object):
                                             repo_sync_directory=abs_path)
 
         #  Execute Command
-        logging.info('Running: ' + cmd)
+        logging.info('Running: \n' + cmd)
         if dry_run is False and skip_reposync is False:
             output = Run_Command(cmd)
             logging.info('Result: ' + str(output))
@@ -105,8 +117,9 @@ class Repo_Manager(object):
         #  Flag if we want to write the repolist
         if options.values['BUILD_REPOLIST'] is True:
             self.Build_Repo_Config( options.values['REPO_CONFIG_PATH'],
-                                    options.values['REPO_CONFIG_FORMAT'])
-        
+                                    options.values['REPO_CONFIG_FORMAT'],
+                                    options.values['REPO_ACTIVATE_ENABLED_REPOS'])
+
         
         #  Get list of repositories
         else:    
@@ -155,9 +168,9 @@ class Repo_Manager(object):
 
 
     def Build_Repo_Config( self, repo_config_path,
-                                 repo_config_format):
+                                 repo_config_format,
+                                 activate_enabled_repos ):
 
-        
         #  Get list of repos on the system
         cmd_output = Run_Command('yum repolist all')
 
@@ -188,12 +201,17 @@ class Repo_Manager(object):
             #  Prune the data
             pline = line.strip()
             if len(pline) <= 0:
-                continue;
+                continue
+
 
             #  Split
             repo_name = Parse_Repo_Name(pline.split()[0])
             arch = 'all'
+            enabled_state = Parse_Repo_Enable_State( pline.split()[1])
             enabled = False
+
+            if (enabled_state == True) and (activate_enabled_repos == True):
+                enabled = True
 
             #  Add the name of the repo
             repos.append(Yum_Repo( repo_name, arch, enabled ))
@@ -210,6 +228,7 @@ class Repo_Manager(object):
                 csvfile.write( repo.name + ',' + str(repo.arch) + ',' + str(repo.enabled) + "\n")
 
     def Write_Repo_Spec(self, options):
+
 
         #  Create the output file
         base_url = options.values['SYNC_DIRECTORY']

@@ -24,11 +24,6 @@ def Main():
     #  Create repository manager
     repo_manager = Repo_Manager(options=options)
 
-    #  If we only want to build the repolist, then exit
-    if options.values['BUILD_REPOLIST'] is True:
-
-        repo_manager.Build_Repo_Config(options.values['REPO_CONFIG_PATH'],
-                                       options.values['REPO_CONFIG_FORMAT'])
 
     #  Iterate over repositories, syncing
     for repo in repo_manager.repos:
@@ -41,6 +36,7 @@ def Main():
 
     #  Build the Repo Spec File
     repo_manager.Write_Repo_Spec(options=options)
+
 
 if __name__ == '__main__':
     Main()

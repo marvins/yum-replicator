@@ -27,30 +27,17 @@ class Reposync_Config(object):
             cmd_args = self.cmd_args
 
         #  Return output
-        output = self.cmd_name + ' ' + cmd_args + ' -r ' + repo_name + ' -p ' + repo_sync_directory
+        output = self.cmd_name + ' ' + cmd_args + ' -r ' + repo_name + ' ' + repo_sync_directory
 
         return output
 
 class Configuration(object):
 
-    #  Command-Line Options
-    cmd_options = None
-
-    #  Command-Line Parser
-    cmd_parser = None
-
-    #  Config-File Options
-    cfg_options = None
-
-    #  Global Options
-    values = {}
-
-    #  Repo Sync Config Settings
-    reposync_config = None
-
 
     def __init__(self):
 
+        #  Initialize Default Values
+        self.Set_Defaults()
 
         #  Parse the command-line options
         self.Parse_Command_Line()
@@ -60,6 +47,25 @@ class Configuration(object):
 
         #  Configure Logging
         self.Configure_Logging()
+
+    def Set_Defaults(self):
+
+        #  Command-Line Options
+        self.cmd_options = None
+
+        #  Command-Line Parser
+        self.cmd_parser = None
+
+        #  Config-File Options
+        self.cfg_options = None
+
+        #  Global Options
+        self.values = {}
+        self.values['REPO_SPEC'] = {'WRITE_REPO_SPEC_FILES'    : False,
+                                    'WRITE_REPO_COMPOSITE_SPEC': False }
+
+        #  Repo Sync Config Settings
+        reposync_config = None
 
 
     def Parse_Command_Line(self):
@@ -135,6 +141,8 @@ class Configuration(object):
         if self.cmd_options.repo_config_format is not None:
             self.values['REPO_CONFIG_FORMAT'] = self.cmd_options.repo_config_format
 
+        self.values['REPO_ACTIVATE_ENABLED_REPOS'] = self.cfg_options.getboolean('repo-config','ACTIVATE_ENABLED_REPOS')
+
 
         #  Define the Synchronization Directory
         self.values['SYNC_DIRECTORY'] = self.cfg_options.get('general','SYNC_DIRECTORY')
@@ -147,6 +155,12 @@ class Configuration(object):
         #  Create reposync config object
         self.reposync_config = Reposync_Config(cmd_name=self.cfg_options.get('general', 'REPO_SYNC_COMMAND'),
                                                cmd_args=self.cfg_options.get('general', 'REPO_SYNC_ARGS'))
+
+        #  Repo Spec Settings
+        if self.cfg_options.has_option('repo-spec', 'WRITE_REPO_SPEC_FILES'):
+            self.values['REPO_SPEC']['WRITE_REPO_SPEC_FILES'] = self.cfg_options.getboolean('repo-spec','WRITE_REPO_SPEC_FILES')
+        if self.cfg_options.has_option('repo-spec', 'WRITE_REPO_COMPOSITE_SPEC'):
+            self.values['REPO_SPEC']['WRITE_REPO_COMPOSITE_SPEC'] = self.cfg_options.getboolean('repo-spec','WRITE_REPO_COMPOSITE_SPEC')
 
 
     def Configure_Logging(self):
